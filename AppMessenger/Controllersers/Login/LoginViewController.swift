@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class LoginViewController: UIViewController {
     
@@ -90,15 +91,32 @@ class LoginViewController: UIViewController {
         loginButtom.frame = CGRect(x: 30, y: passwordField.bottom+10, width: scrollView.width-60, height: 52)
     }
     @objc private func loginButtonTapped() {
-        
         emailField.resignFirstResponder()
         passwordField.resignFirstResponder()
         
-        guard let email = emailField.text, let password = passwordField.text, !email.isEmpty, !password.isEmpty, password.count >= 6 else {
+        guard let email = emailField.text,
+              let password = passwordField.text,
+              !email.isEmpty,
+              !password.isEmpty,
+              password.count >= 6 else {
             alertUserLoginError()
             return
         }
         // Firebase Log In
+        FirebaseAuth.Auth.auth().signIn(withEmail: email, password: password, completion: { [weak self] authResult, error in
+            guard let strongSelf = self else {
+                
+                return
+            }
+            guard let result = authResult, error == nil else {
+                print("Failed: \(email)")
+                return
+            }
+            let user = result.user
+            print("Login User: \(user)")
+            strongSelf.navigationController?.dismiss(animated: true)
+        })
+     
     }
     func alertUserLoginError() {
         let alert = UIAlertController(title: "Rất tiếc", message: "Vui lòng nhập đầy đủ thông tin để đăng nhập", preferredStyle: .alert)

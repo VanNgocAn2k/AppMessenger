@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class RegisterViewController: UIViewController {
 
@@ -17,11 +18,11 @@ class RegisterViewController: UIViewController {
     
     private let imageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person")
+        imageView.image = UIImage(systemName: "person.circle")
         imageView.tintColor = .gray
         imageView.contentMode = .scaleAspectFit
         imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 2
+        imageView.layer.borderWidth = 1
         imageView.layer.borderColor = UIColor.lightGray.cgColor
         return imageView
     }()
@@ -96,7 +97,7 @@ class RegisterViewController: UIViewController {
     }()
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Log in"
+        title = "Register"
         view.backgroundColor = .white
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Register",
                                                             style: .done,
@@ -149,15 +150,41 @@ class RegisterViewController: UIViewController {
               let lastName = lastNameField.text,
               let email = emailField.text,
               let password = passwordField.text,
-              !email.isEmpty, !password.isEmpty, !firstName.isEmpty, lastName.isEmpty,
+              !email.isEmpty,
+              !password.isEmpty,
+              !firstName.isEmpty,
+              !lastName.isEmpty,
               password.count >= 6 else {
             alertUserLoginError()
             return
         }
-        // Firebase Log In
+        // Firebase Register
+        DatabaseManager.shared.userExist(with: email, completion: { [weak self] exists in
+            guard let strongSelf = self else {
+                return
+            }
+            guard !exists else {
+                // user already exists
+                self?.alertUserLoginError(message: "Có vẻ như tài khoản người dùng cho địa chỉ email đó đã tồn tại.")
+                return
+            }
+            FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password, completion: { authResult, error in
+             
+                guard authResult != nil, error == nil else {
+                    print("Error cureating user")
+                    return
+                }
+    //            let user = result.user
+    //            print("Create User: \(user)")
+                DatabaseManager.shared.insertUser(with: AppMessengerUser(firstName: firstName, lastName: lastName, emailAddress: email))
+                
+                strongSelf.navigationController?.dismiss(animated: true)
+            })
+        })
+        
     }
-    func alertUserLoginError() {
-        let alert = UIAlertController(title: "Rất tiếc", message: "Vui lòng nhập đầy đủ thông tin để đăng kí", preferredStyle: .alert)
+    func alertUserLoginError(message: String = "Vui lòng nhập đầy đủ thông tin để đăng kí") {
+        let alert = UIAlertController(title: "Rất tiếc", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Bỏ qua", style: .cancel))
         present(alert, animated: true)
     }
