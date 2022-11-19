@@ -9,5 +9,7 @@ target 'AppMessenger' do
 pod 'Firebase/Core'
 pod 'Firebase/Auth'
 pod 'Firebase/Database'
-
+# FACEBOOK
+pod 'FBSDKLoginKit'
+pod 'GoogleSignIn'
 end
